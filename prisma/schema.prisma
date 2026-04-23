@@ -1,0 +1,163 @@
+// CareLens database schema
+// Uses SQLite locally; swap to Postgres/Supabase for prod by changing the URL.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  passwordHash  String?
+  displayName   String
+  locale        String    @default("zh-TW") // "zh-TW" | "en-US"
+  avatarUrl     String?
+  createdAt     DateTime  @default(now())
+
+  ownedElders      Elder[]           @relation("elder_owner")
+  memberships      FamilyMember[]
+  medsAdded        Medication[]      @relation("med_added_by")
+  vitalsLogged     Vital[]           @relation("vital_logged_by")
+  invitesSent      FamilyInvite[]    @relation("invite_sender")
+  activities       ActivityLog[]
+}
+
+model Elder {
+  id            String    @id @default(cuid())
+  ownerId       String
+  name          String
+  birthdate     DateTime
+  // Stored as JSON strings for SQLite compatibility
+  conditions    String    @default("[]") // JSON: string[]
+  allergies     String    @default("[]") // JSON: string[]
+  avatarUrl     String?
+  notes         String?
+  timezone      String    @default("Asia/Taipei")
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  owner         User            @relation("elder_owner", fields: [ownerId], references: [id], onDelete: Cascade)
+  members       FamilyMember[]
+  medications   Medication[]
+  vitals        Vital[]
+  interactions  Interaction[]
+  insights      Insight[]
+  activities    ActivityLog[]
+  invites       FamilyInvite[]
+}
+
+model FamilyMember {
+  id          String    @id @default(cuid())
+  elderId     String
+  userId      String
+  role        String    @default("CAREGIVER") // OWNER | CAREGIVER | VIEWER
+  joinedAt    DateTime  @default(now())
+
+  elder       Elder     @relation(fields: [elderId], references: [id], onDelete: Cascade)
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([elderId, userId])
+}
+
+model FamilyInvite {
+  id            String    @id @default(cuid())
+  elderId       String
+  email         String
+  role          String    @default("CAREGIVER")
+  token         String    @unique
+  invitedById   String
+  expiresAt     DateTime
+  acceptedAt    DateTime?
+  createdAt     DateTime  @default(now())
+
+  elder         Elder     @relation(fields: [elderId], references: [id], onDelete: Cascade)
+  invitedBy     User      @relation("invite_sender", fields: [invitedById], references: [id], onDelete: Cascade)
+}
+
+model Medication {
+  id            String    @id @default(cuid())
+  elderId       String
+  name          String    // generic name or as read
+  nameZh        String?   // Chinese name
+  dose          String
+  frequency     String    // e.g. "每日兩次" or "BID"
+  purpose       String?   // why taken
+  startedOn     DateTime  @default(now())
+  endedOn       DateTime?
+  photoUrl      String?
+  notes         String?
+  addedById     String
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  elder         Elder     @relation(fields: [elderId], references: [id], onDelete: Cascade)
+  addedBy       User      @relation("med_added_by", fields: [addedById], references: [id])
+}
+
+model Vital {
+  id            String    @id @default(cuid())
+  elderId       String
+  measuredAt    DateTime  @default(now())
+  type          String    // BP_SYSTOLIC | BP_DIASTOLIC | HR | GLUCOSE | WEIGHT | SPO2 | TEMP
+  value         Float
+  unit          String    // mmHg | bpm | mg/dL | kg | % | °C
+  loggedById    String
+  notes         String?
+  createdAt     DateTime  @default(now())
+
+  elder         Elder     @relation(fields: [elderId], references: [id], onDelete: Cascade)
+  loggedBy      User      @relation("vital_logged_by", fields: [loggedById], references: [id])
+}
+
+model Interaction {
+  id            String    @id @default(cuid())
+  elderId       String
+  medIds        String    // JSON array of medication IDs involved
+  severity      String    // NONE | MILD | MODERATE | SEVERE | CRITICAL
+  summary       String
+  summaryZh     String?
+  details       String    // JSON payload
+  checkedAt     DateTime  @default(now())
+
+  elder         Elder     @relation(fields: [elderId], references: [id], onDelete: Cascade)
+}
+
+model Insight {
+  id            String    @id @default(cuid())
+  elderId       String
+  date          DateTime  @default(now())
+  summary       String    // English
+  summaryZh     String    // 繁中
+  highlights    String    // JSON
+  generatedAt   DateTime  @default(now())
+
+  elder         Elder     @relation(fields: [elderId], references: [id], onDelete: Cascade)
+
+  @@unique([elderId, date])
+}
+
+model ActivityLog {
+  id            String    @id @default(cuid())
+  elderId       String
+  actorId       String
+  action        String    // MED_ADDED | VITAL_LOGGED | MEMBER_INVITED | ELDER_UPDATED | ...
+  payload       String    // JSON
+  createdAt     DateTime  @default(now())
+
+  elder         Elder     @relation(fields: [elderId], references: [id], onDelete: Cascade)
+  actor         User      @relation(fields: [actorId], references: [id])
+}
+
+model Session {
+  id          String    @id @default(cuid())
+  userId      String
+  token       String    @unique
+  expiresAt   DateTime
+  createdAt   DateTime  @default(now())
+
+  @@index([userId])
+}
