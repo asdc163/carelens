@@ -9,6 +9,20 @@
 ![Prisma 7](https://img.shields.io/badge/Prisma-7-2D3748)
 ![Claude Sonnet 4.5](https://img.shields.io/badge/Claude-Sonnet%204.5-D97757)
 
+![Landing page](./public/screenshots/landing.png)
+
+---
+
+## Screenshots
+
+| Dashboard | Medications |
+|-----------|-------------|
+| ![Dashboard](./public/screenshots/dashboard.png) | ![Medications](./public/screenshots/medications.png) |
+| **Vitals** | **Add medication (OCR flow)** |
+| ![Vitals](./public/screenshots/vitals.png) | ![Add medication](./public/screenshots/new-med.png) |
+| **Family & roles** | **Activity timeline** |
+| ![Family](./public/screenshots/family.png) | ![Timeline](./public/screenshots/timeline.png) |
+
 ---
 
 ## Why CareLens
