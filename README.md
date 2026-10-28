@@ -1,7 +1,10 @@
 # CareLens
 
-> Bilingual (繁中 / English) AI caregiving copilot for families looking after aging parents.
-> Snap a photo of a pill bottle — CareLens reads the drug, checks for dangerous interactions, and keeps the whole family in sync.
+> Bilingual family-care coordination prototype exploring image-to-structured-data with Claude.
+
+**Prototype status:** This repository contains implemented feature paths and deterministic no-key mocks. Current provider behavior, OCR accuracy, latency, clinical correctness, and deployment availability have not been established by the portfolio review. Model confidence is not a calibrated reliability score; mock output is not an image-recognition result.
+
+[Read the AI implementation evidence](https://github.com/asdc163/ai-builder-portfolio/blob/main/docs/ai-capability-evidence.md)
 
 ![Next.js 16](https://img.shields.io/badge/Next.js-16-black)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178C6)
@@ -33,15 +36,15 @@ Adult children caring for aging parents face three compounding pains:
 2. **Medical literacy is missing.** Handwritten prescriptions, confusing drug combinations, unclear side-effects.
 3. **Siblings fall out of sync.** The one who lives closest sees the doctor; the one who lives abroad relies on phone calls.
 
-Existing tools are either marketplace apps for hiring caregivers (CareLinx, Honor), single-user pill reminders (Medisafe), or clinician EHR. **Nothing treats the family as the unit of care, uses multimodal AI to remove the literacy barrier, and is designed Traditional-Chinese-first for Chinese-speaking households.**
+These are problem hypotheses behind the prototype, not findings from a user study. The implementation explores family coordination, a Traditional Chinese interface, and optional multimodal input.
 
-## What it does (MVP, all shipping)
+## Implemented prototype paths
 
-- **Photo-to-medication in 3 seconds.** Point phone at a pill bottle or prescription slip → Claude Vision extracts drug name (ZH + EN), dose, frequency, warnings. Confidence-graded so the family knows when to verify.
-- **Drug interaction check with severity grading.** Every new medication is automatically cross-checked against the existing list. Severity: NONE / MILD / MODERATE / SEVERE / CRITICAL. Families see the warning before the next doctor visit.
+- **Photo-to-structured medication data.** Point phone at a pill bottle or prescription slip → Claude Vision extracts drug name (ZH + EN), dose, frequency, warnings. The response includes a model-generated confidence label; it is not a calibrated measure of accuracy.
+- **Drug interaction check with severity grading.** Every new medication is automatically cross-checked against the existing list. Severity: NONE / MILD / MODERATE / SEVERE / CRITICAL. The generated report is an unvalidated prototype output, not a clinical assessment.
 - **Proactive daily insight.** The dashboard shows an AI-written summary ("血壓 128/82，比上週高，睡眠偏少可能有關") instead of making the caregiver stare at charts.
 - **Family sharing with roles.** Invite siblings or professional carers as `CAREGIVER` (read + write) or `VIEWER` (read-only). The owner controls access. Activity timeline shows who did what when.
-- **Vital signs with trend sparklines.** BP, HR, glucose, weight, SpO₂ — log in seconds, see 7-day trends at a glance.
+- **Vital signs with trend sparklines.** The prototype provides entry screens for vital-sign values and trend displays.
 - **繁中-first UI, English toggle.** Every string translated, including AI-generated summaries. Noto Sans TC bundled so typography looks deliberate.
 - **Mobile-first responsive.** Phone is the primary surface; desktop isn't an afterthought.
 
@@ -49,7 +52,7 @@ Existing tools are either marketplace apps for hiring caregivers (CareLinx, Hono
 
 ### Hosted demo
 
-Visit the deployed URL (see top of repo) and click **"Try with demo account"** on the sign-in page — you'll log in instantly to a pre-seeded household ("媽媽", 4 medications including a deliberate Warfarin+Aspirin interaction, 14 days of vitals, 10 activity events, 1 sibling co-caregiver).
+No hosted-demo availability was verified in the 2026-10-28 review. The prototype includes a **"Try with demo account"** sign-in path with seeded sample data. Check provider/mock configuration and access controls before using a deployment. Demo fixtures are not model-performance evidence.
 
 ### Run locally
 
@@ -67,9 +70,9 @@ Optional: add `ANTHROPIC_API_KEY` to `.env` to run real Claude Vision OCR and in
 ## Architecture
 
 - **Next.js 16** App Router, server components, server actions — no separate backend.
-- **Prisma 7 + SQLite** locally (portable, zero-config). Swap to Postgres/Supabase for production by changing `DATABASE_URL` and re-running migrations.
-- **Claude Sonnet 4.5** via Anthropic SDK for OCR (multimodal), interaction analysis, and daily insights. All prompts return strict JSON validated by Zod.
-- **Tailwind v4 + shadcn/ui (Radix)** — warm off-white + teal palette, OKLCH color space, 4.5:1+ contrast throughout.
+- **Prisma 7 + SQLite** for local use. A move to a production database requires schema, deployment, access-control, and restore validation.
+- **Claude Sonnet 4.5** via Anthropic SDK for OCR (multimodal), interaction analysis, and daily insights. Model helpers request JSON and parse responses with Zod; structural parsing does not establish semantic correctness.
+- **Tailwind v4 + shadcn/ui (Radix)** — warm off-white + teal palette, OKLCH color space, contrast and assistive-technology coverage require separate verification.
 - **Session-based auth** — bcrypt + httpOnly cookies, Session table in DB. Stays portable across hosts (no third-party identity provider required).
 - **i18n** — custom lightweight layer with typed message maps. No bundle bloat.
 
